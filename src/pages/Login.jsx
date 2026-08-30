@@ -41,8 +41,18 @@ export default function Login() {
         emailToUse = usernameSnap.data().email;
       }
 
-      await signInWithEmailAndPassword(auth, emailToUse, password);
-      navigate("/");
+      const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password);
+      const uid = userCredential.user.uid;
+
+      // Check if user is admin to redirect to /admin
+      const userDocRef = doc(db, "users", uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists() && userDocSnap.data().isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       if (
         err.code === "auth/wrong-password" ||
