@@ -30,11 +30,18 @@ export default function Admin() {
 
   useEffect(() => {
     const ordersRef = collection(db, "orders", today, "userOrders");
-    const unsub = onSnapshot(ordersRef, (snap) => {
-      const data = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
-      setOrders(data);
-      setOrdersLoading(false);
-    });
+    const unsub = onSnapshot(
+      ordersRef,
+      (snap) => {
+        const data = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+        setOrders(data);
+        setOrdersLoading(false);
+      },
+      (err) => {
+        console.error("Admin orders snapshot error:", err);
+        setOrdersLoading(false);
+      }
+    );
     return unsub;
   }, [today]);
 
@@ -44,11 +51,18 @@ export default function Admin() {
 
   useEffect(() => {
     const usersRef = collection(db, "users");
-    const unsub = onSnapshot(usersRef, (snap) => {
-      const data = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
-      setAllUsers(data);
-      setUsersLoading(false);
-    });
+    const unsub = onSnapshot(
+      usersRef,
+      (snap) => {
+        const data = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+        setAllUsers(data);
+        setUsersLoading(false);
+      },
+      (err) => {
+        console.error("Admin users snapshot error:", err);
+        setUsersLoading(false);
+      }
+    );
     return unsub;
   }, []);
 

@@ -30,17 +30,19 @@ export default function AdminOrderList({ orders, allUsers, loading }) {
     );
   }
 
-  // Sort members alphabetically by name
-  const sortedMembers = [...members].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  // Sort members alphabetically by name safely (avoiding crashes if name is undefined)
+  const sortedMembers = [...members].sort((a, b) => {
+    const nameA = a.name || "";
+    const nameB = b.name || "";
+    return nameA.localeCompare(nameB);
+  });
 
   // Group a user's items by shop
   function groupByShop(items) {
     const map = {};
     for (const item of items) {
       if (!map[item.shopId]) {
-        map[item.shopId] = { shopName: item.shopName, items: [] };
+        map[item.shopId] = { shopName: item.shopName || "Unknown Shop", items: [] };
       }
       map[item.shopId].items.push(item);
     }

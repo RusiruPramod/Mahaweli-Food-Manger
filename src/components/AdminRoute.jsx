@@ -9,7 +9,9 @@ import { useAuth } from "../context/AuthContext";
 export default function AdminRoute({ children }) {
   const { user, profile, loading } = useAuth();
 
-  if (loading || (user && profile === null)) {
+  const isSystemAdmin = profile?.isAdmin || user?.email === "admin@gmail.com";
+
+  if (loading || (user && profile === null && user.email !== "admin@gmail.com")) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-orange-50">
         <div className="flex flex-col items-center gap-3">
@@ -24,7 +26,7 @@ export default function AdminRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!profile?.isAdmin) {
+  if (!isSystemAdmin) {
     return <Navigate to="/" replace />;
   }
 

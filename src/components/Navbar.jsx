@@ -4,13 +4,15 @@ import { auth } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogout() {
     await signOut(auth);
     navigate("/login");
   }
+
+  const showAdminLink = profile?.isAdmin || user?.email === "admin@gmail.com";
 
   return (
     <nav className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
@@ -24,7 +26,7 @@ export default function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          {profile?.isAdmin && (
+          {showAdminLink && (
             <Link
               to="/admin"
               className="text-xs font-semibold bg-brand-100 text-brand-700 px-3 py-1 rounded-full hover:bg-brand-200 transition-colors"
