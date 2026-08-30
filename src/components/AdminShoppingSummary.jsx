@@ -1,12 +1,11 @@
 import { getToday } from "../utils/today";
+import { formatPrice } from "../utils/price";
 import { ClipboardList, Store } from "./Icons";
 
 /**
  * Admin tab: Shopping Summary
- * Pure count-based checklist for purchasing food.
- * NO prices, subtotals, or grand totals.
- * Minimalist, elegant list-based layout (exactly like the text printout,
- * but built as responsive React components).
+ * Pure count-based checklist for purchasing food with each shop's total amount in the corner.
+ * Minimalist, elegant list-based layout.
  */
 export default function AdminShoppingSummary({ orders = [], shops = [], loading = false }) {
   const today = getToday();
@@ -27,10 +26,11 @@ export default function AdminShoppingSummary({ orders = [], shops = [], loading 
       shopName: shop.name,
       items: {},
       totalQty: 0,
+      totalAmount: 0,
     };
   }
 
-  // 2. Aggregate orders: count-detection (Shop → Item → count) — strictly no prices
+  // 2. Aggregate orders: count-detection & shop total amount calculation
   let overallItemCount = 0;
 
   for (const order of orders) {
@@ -41,6 +41,7 @@ export default function AdminShoppingSummary({ orders = [], shops = [], loading 
           shopName: item.shopName || "Unknown Shop",
           items: {},
           totalQty: 0,
+          totalAmount: 0,
         };
       }
       const s = shopMap[item.shopId];
@@ -51,8 +52,10 @@ export default function AdminShoppingSummary({ orders = [], shops = [], loading 
           totalQty: 0,
         };
       }
+      const itemPrice = item.price || 0;
       s.items[item.itemId].totalQty += item.qty;
       s.totalQty += item.qty;
+      s.totalAmount += itemPrice * item.qty;
       overallItemCount += item.qty;
     }
   }
@@ -106,12 +109,19 @@ export default function AdminShoppingSummary({ orders = [], shops = [], loading 
 
             return (
               <div key={shop.shopId} className="space-y-2.5">
-                {/* Shop Name */}
-                <div className="flex items-center gap-2">
-                  <Store className="w-4 h-4 text-gray-500" />
-                  <h3 className="font-extrabold text-gray-800 text-sm sm:text-base">
-                    {shop.shopName}
-                  </h3>
+                {/* Shop Name and Corner Total */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Store className="w-4 h-4 text-gray-500" />
+                    <h3 className="font-extrabold text-gray-800 text-sm sm:text-base">
+                      {shop.shopName}
+                    </h3>
+                  </div>
+                  {hasOrders && (
+                    <span className="text-xs sm:text-sm font-bold text-gray-600">
+                      Total: <span className="text-brand-600 font-extrabold">{formatPrice(shop.totalAmount)}</span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Items */}
