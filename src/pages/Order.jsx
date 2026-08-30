@@ -35,29 +35,45 @@ export default function Order() {
   useEffect(() => {
     setShopsLoading(true);
 
-    // Real-time listener on shops (ordered by 'order' field)
+    // Real-time listener on shops (filtered by active)
     const shopsQ = query(
       collection(db, "shops"),
-      where("active", "==", true),
-      orderBy("order", "asc")
+      where("active", "==", true)
     );
 
-    const unsub = onSnapshot(shopsQ, async (shopsSnap) => {
-      const shopDocs = shopsSnap.docs.map((d) => ({ id: d.id, ...d.data(), items: [] }));
+    const unsub = onSnapshot(
+      shopsQ,
+      async (shopsSnap) => {
+        try {
+          const shopDocs = shopsSnap.docs.map((d) => ({ id: d.id, ...d.data(), items: [] }));
 
-      // Fetch items for each shop
-      const shopPromises = shopDocs.map(async (shop) => {
-        const itemsSnap = await getDocs(
-          query(collection(db, "shops", shop.id, "items"), where("active", "==", true))
-        );
-        shop.items = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        return shop;
-      });
+          // Fetch items for each shop
+          const shopPromises = shopDocs.map(async (shop) => {
+            const itemsSnap = await getDocs(
+              query(collection(db, "shops", shop.id, "items"), where("active", "==", true))
+            );
+            shop.items = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            return shop;
+          });
 
-      const loadedShops = await Promise.all(shopPromises);
-      setShops(loadedShops);
-      setShopsLoading(false);
-    });
+          const loadedShops = await Promise.all(shopPromises);
+          // Sort shops client-side to avoid composite index requirement
+          loadedShops.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+          
+          setShops(loadedShops);
+          setShopsLoading(false);
+        } catch (err) {
+          console.error("Error loading shop items:", err);
+          setError("Error loading menu: " + err.message);
+          setShopsLoading(false);
+        }
+      },
+      (err) => {
+        console.error("Firestore onSnapshot error:", err);
+        setError("Database connection error: " + err.message);
+        setShopsLoading(false);
+      }
+    );
 
     return unsub;
   }, []);

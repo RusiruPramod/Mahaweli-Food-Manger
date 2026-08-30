@@ -75,7 +75,7 @@ firebase login
 firebase deploy --only firestore:rules
 ```
 
-### 5. Seed the Database (shops + items)
+### 5. Seed the Database (Shops, Items, and Users)
 
 ```bash
 # Download your service account key:
@@ -85,8 +85,11 @@ firebase deploy --only firestore:rules
 # Install firebase-admin (only needed once for seeding)
 npm install firebase-admin
 
-# Run the seed script
+# Run the shop menu seed script
 node scripts/seed.js
+
+# Run the user accounts seed script (creates rusiru & admin@gmail.com)
+node scripts/seed-users.js
 ```
 
 This populates:
@@ -95,16 +98,16 @@ This populates:
 - **Samje** — 5 items
 - **Gallery** — 3 items
 
-### 6. Set the First Admin User
+And registers/seeds these user accounts:
+- **User:** `rusiru` (password: `123456`)
+- **Admin:** `admin@gmail.com` (password: `admin123`)
 
-After the first person signs up through the app:
+### 6. Manual Admin Promotion Alternative
 
-1. Firebase Console → **Firestore Database → users collection**
-2. Find the document for that user
-3. Change `isAdmin` from `false` to `true`
-4. Save
-
-That person can now access the `/admin` panel.
+If you do not run the user seeding script, you can manually set the first admin:
+1. Sign up on the app.
+2. Go to **Firebase Console → Firestore Database → users collection**.
+3. Find your user document and change `isAdmin` to `true`.
 
 > ⚠️ **Security:** No user can grant themselves admin via the app UI. The Firestore rules enforce this — only an existing admin can update another user's `isAdmin` field.
 

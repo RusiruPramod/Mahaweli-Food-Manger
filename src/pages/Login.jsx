@@ -6,7 +6,7 @@ import { auth, db } from "../firebase";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const [nameOrEmail, setNameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,22 +21,27 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const usernameLower = normalize(name);
+      const input = nameOrEmail.trim();
+      let emailToUse = "";
 
-      // Look up the synthetic email from the username doc
-      const usernameRef = doc(db, "usernames", usernameLower);
-      const usernameSnap = await getDoc(usernameRef);
+      if (input.includes("@")) {
+        // Direct email login — used by admin (e.g. admin@gmail.com)
+        emailToUse = input;
+      } else {
+        // Username-based login — look up synthetic email
+        const usernameLower = normalize(input);
+        const usernameRef = doc(db, "usernames", usernameLower);
+        const usernameSnap = await getDoc(usernameRef);
 
-      if (!usernameSnap.exists()) {
-        setError("Name not found. Check your spelling or sign up first.");
-        setLoading(false);
-        return;
+        if (!usernameSnap.exists()) {
+          setError("Name not found. Check your spelling or sign up first.");
+          setLoading(false);
+          return;
+        }
+        emailToUse = usernameSnap.data().email;
       }
 
-      const { email } = usernameSnap.data();
-
-      // Sign in with the synthetic email
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, emailToUse, password);
       navigate("/");
     } catch (err) {
       if (
@@ -44,7 +49,7 @@ export default function Login() {
         err.code === "auth/invalid-credential" ||
         err.code === "auth/invalid-email"
       ) {
-        setError("Wrong password. Please try again.");
+        setError("Wrong name/email or password. Please try again.");
       } else if (err.code === "auth/too-many-requests") {
         setError("Too many failed attempts. Please wait a moment and try again.");
       } else {
@@ -68,18 +73,18 @@ export default function Login() {
         {/* Card */}
         <div className="bg-white rounded-3xl shadow-xl shadow-orange-100 border border-gray-100 p-7">
           <form id="login-form" onSubmit={handleSubmit} className="space-y-4">
-            {/* Name */}
+            {/* Name or Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="login-name">
-                Your Name
+                Name or Email
               </label>
               <input
                 id="login-name"
                 type="text"
                 autoComplete="username"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Kasun"
+                value={nameOrEmail}
+                onChange={(e) => setNameOrEmail(e.target.value)}
+                placeholder="Your name or email address"
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm
                   focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent
                   transition-shadow"
@@ -134,11 +139,19 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-5">
-            New here?{" "}
-            <Link to="/signup" className="text-brand-600 font-semibold hover:underline">
-              Create an account
-            </Link>
+          <p className="text-center text-sm text-gray-500 mt-5 space-y-2">
+            <div>
+              New here?{" "}
+              <Link to="/signup" className="text-brand-600 font-semibold hover:underline">
+                Create an account
+              </Link>
+            </div>
+            <div className="pt-2 border-t border-gray-100 text-xs text-gray-400">
+              Need to initialize the app?{" "}
+              <Link to="/setup" className="text-brand-500 font-medium hover:underline">
+                Setup Database & Users
+              </Link>
+            </div>
           </p>
         </div>
       </div>

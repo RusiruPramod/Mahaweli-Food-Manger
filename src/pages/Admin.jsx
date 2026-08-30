@@ -44,28 +44,42 @@ export default function Admin() {
 
   useEffect(() => {
     // Listen to ALL shops (not just active), for the menu editor
-    const shopsQ = query(collection(db, "shops"), orderBy("order", "asc"));
+    const shopsQ = query(collection(db, "shops"));
 
-    const unsub = onSnapshot(shopsQ, async (snap) => {
-      const shopDocs = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-        items: [],
-      }));
+    const unsub = onSnapshot(
+      shopsQ,
+      async (snap) => {
+        try {
+          const shopDocs = snap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+            items: [],
+          }));
 
-      // For each shop fetch ALL items (including inactive) for the menu editor
-      const shopPromises = shopDocs.map(async (shop) => {
-        const itemsSnap = await getDocs(
-          collection(db, "shops", shop.id, "items")
-        );
-        shop.items = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        return shop;
-      });
+          // For each shop fetch ALL items (including inactive) for the menu editor
+          const shopPromises = shopDocs.map(async (shop) => {
+            const itemsSnap = await getDocs(
+              collection(db, "shops", shop.id, "items")
+            );
+            shop.items = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            return shop;
+          });
 
-      const loaded = await Promise.all(shopPromises);
-      setShops(loaded);
-      setShopsLoading(false);
-    });
+          const loaded = await Promise.all(shopPromises);
+          // Sort client-side
+          loaded.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+          setShops(loaded);
+          setShopsLoading(false);
+        } catch (err) {
+          console.error("Admin shops load error:", err);
+          setShopsLoading(false);
+        }
+      },
+      (err) => {
+        console.error("Admin shops subscription error:", err);
+        setShopsLoading(false);
+      }
+    );
 
     return unsub;
   }, []);

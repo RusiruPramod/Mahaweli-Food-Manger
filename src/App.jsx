@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Order from "./pages/Order";
 import Admin from "./pages/Admin";
+import Setup from "./pages/Setup";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           {/* Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/setup" element={<Setup />} />
 
           {/* Protected — any signed-in user */}
           <Route

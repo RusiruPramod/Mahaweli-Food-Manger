@@ -24,18 +24,17 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
-      allow create: if isOwner(uid) && request.resource.data.isAdmin == false;
-      allow update: if isOwner(uid) && request.resource.data.isAdmin == resource.data.isAdmin;
-      allow update: if isAdmin();
+      allow create, update: if isOwner(uid);
+      allow delete: if isAdmin();
     }
 
     match /shops/{shopId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
 
       match /items/{itemId} {
         allow read: if true;
-        allow write: if isAdmin();
+        allow write: if isSignedIn();
       }
     }
 
