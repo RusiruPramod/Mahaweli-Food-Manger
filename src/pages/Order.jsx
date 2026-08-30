@@ -98,6 +98,7 @@ export default function Order() {
       } else {
         setSavedOrder(null);
         setSaveSuccess(false);
+        setQuantities({});
       }
     });
 

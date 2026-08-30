@@ -43,5 +43,12 @@ service cloud.firestore {
       allow create, update: if isOwner(uid);
       allow delete: if isOwner(uid) || isAdmin();
     }
+
+    match /order_history/{historyId} {
+      allow read, write, delete: if isAdmin();
+      match /{allSubcollections=**} {
+        allow read, write, delete: if isAdmin();
+      }
+    }
   }
 }
