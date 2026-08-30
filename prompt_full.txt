@@ -1,0 +1,321 @@
+﻿# BUILD PROMPT â€” Hostel Food Ordering App
+
+Paste everything below into Antigravity as your first instruction.
+
+---
+
+You are an expert full-stack engineer. Build a complete, production-ready web application in ONE SHOT based on the exact specification below. Do not ask clarifying questions â€” follow this spec exactly, including the file contents given.
+
+## 1. Purpose
+
+A simple food-ordering coordinator app for a hostel group. Each day, members log in and select what food they want from a set of local shops. One person (admin) collects all orders and needs a clean shopping list to take to each shop, plus a detailed view of who ordered what.
+
+## 2. Tech Stack (mandatory)
+
+- React 18 + Vite
+- React Router v6
+- Tailwind CSS (mobile-first, must look clean on phone AND desktop)
+- Firebase Auth (Email/Password provider only)
+- Firebase Firestore (client SDK, real-time listeners with `onSnapshot`)
+- Deployment target: Vercel (static SPA build)
+- No backend server â€” everything is Firebase client SDK + Firestore Security Rules
+
+## 3. Auth design (important â€” read carefully)
+
+Users must be able to sign up with **just a Name and a Password** â€” no visible email field. Since Firebase Auth requires an email, implement this internally:
+
+1. On signup, normalize the name â†’ `usernameLower` (lowercase, trim, spaces removed).
+2. Check `usernames/{usernameLower}` doc doesn't already exist (public read).
+3. Build a synthetic email: `${usernameLower}@hostelfoods.app`
+4. Call `createUserWithEmailAndPassword(auth, syntheticEmail, password)`.
+5. Immediately after (now authenticated), create:
+   - `usernames/{usernameLower}` â†’ `{ uid, email: syntheticEmail, createdAt }`
+   - `users/{uid}` â†’ `{ name, usernameLower, isAdmin: false, createdAt }`
+
+For login: user enters Name + Password â†’ app reads `usernames/{usernameLower}` to get the synthetic email â†’ calls `signInWithEmailAndPassword`.
+
+Show a friendly error if the username is taken or doesn't exist / wrong password.
+
+**First admin setup:** after first signup, the developer manually sets `isAdmin: true` on that user's doc in the Firebase console. Document this clearly in a `README.md` "Post-Deploy Setup" section.
+
+## 4. Data model (Firestore)
+
+```
+users/{uid}
+  name: string
+  usernameLower: string
+  isAdmin: boolean
+  createdAt: timestamp
+
+usernames/{usernameLower}
+  uid: string
+  email: string
+  createdAt: timestamp
+
+shops/{shopId}
+  name: string
+  order: number        // display order
+  active: boolean
+
+shops/{shopId}/items/{itemId}
+  name: string
+  price: number
+  active: boolean
+  updatedAt: timestamp
+
+orders/{date}/userOrders/{uid}      // date format "YYYY-MM-DD", Asia/Colombo timezone
+  userName: string                  // snapshot of name at order time
+  items: [
+    { shopId, shopName, itemId, itemName, price, qty }
+  ]
+  total: number
+  createdAt: timestamp
+  updatedAt: timestamp
+```
+
+Note: item `price` is copied into the order at the moment of saving. If admin changes a price later, already-saved orders keep the old price (historically accurate); the user must resave their order to pick up a new price. This is intentional â€” implement it this way.
+
+Compute "today" client-side in `Asia/Colombo` timezone as `YYYY-MM-DD`, in a single shared util `src/utils/today.js`.
+
+## 5. Seed data (seed shops + items exactly as below)
+
+```js
+// scripts/seed.js  â€” run once with `node scripts/seed.js` using firebase-admin + a service account key
+const shops = [
+  {
+    id: "maalu-kade",
+    name: "Malu Kade",
+    order: 1,
+    items: [
+      { id: "chicken-keema", name: "Chicken Keema Packet", price: 320 },
+      { id: "sausage-keema", name: "Sausage Keema Packet", price: 180 },
+      { id: "egg-keema", name: "Egg Keema", price: 160 },
+      { id: "omelette", name: "Omelette", price: 180 },
+    ],
+  },
+  {
+    id: "delgaha-kade",
+    name: "Delgaha Kade",
+    order: 2,
+    items: [], // no menu provided yet â€” admin adds items later via Manage Menu
+  },
+  {
+    id: "samje",
+    name: "Samje",
+    order: 3,
+    items: [
+      { id: "egg-rice", name: "Egg Rice", price: 160 },
+      { id: "omelette", name: "Omelette", price: 160 },
+      { id: "normal-rice", name: "Normal Rice", price: 100 },
+      { id: "chicken", name: "Chicken", price: 260 },
+      { id: "maalu", name: "Maalu", price: 220 },
+    ],
+  },
+  {
+    id: "gallery",
+    name: "Gallery",
+    order: 4,
+    items: [
+      { id: "chicken", name: "Chicken", price: 180 },
+      { id: "normal", name: "Normal", price: 110 },
+      { id: "eggs", name: "Eggs", price: 140 },
+    ],
+  },
+];
+
+// For each shop: setDoc shops/{id} = {name, order, active:true}
+// For each item: setDoc shops/{id}/items/{itemId} = {name, price, active:true, updatedAt: now}
+```
+
+Write this as an actual working Node script using `firebase-admin`, reading `serviceAccountKey.json` from project root (gitignored), looping through `shops` and writing both the shop doc and its `items` subcollection docs.
+
+## 6. Pages / Routes
+
+- `/signup` â€” Name + Password + Confirm Password
+- `/login` â€” Name + Password
+- `/` (protected) â€” **Order page**:
+  - Shows all active shops as sections/cards, in `order` sequence
+  - Each shop shows its active items with a quantity stepper (+/-)
+  - Live subtotal per shop and a grand total, sticky at bottom on mobile
+  - On load, fetch today's existing order for this user (if any) and prefill quantities
+  - "Save / Update Today's Order" button â†’ writes to `orders/{today}/userOrders/{uid}`
+  - Show a confirmation state ("Your order for today is saved âœ…") with the saved total
+- `/admin` (protected, `isAdmin` only) â€” tabs:
+  - **Today's Orders** (detail view): real-time list of every member's order today â€” name, itemized breakdown per shop, personal total. Sorted by name.
+  - **Shopping Summary**: derived from the same real-time data, grouped ONLY by shop â†’ item â†’ total quantity ordered. **No user names anywhere in this tab.** Also show a grand total per shop and an overall grand total. This is the list admin physically takes when collecting food.
+  - **Manage Menu**: CRUD for shops and items â€” edit price, toggle active/inactive, add new item, add new shop (needed since Delgaha Kade starts empty).
+
+Non-admin users must not be able to access `/admin` (route guard + Firestore rules both).
+
+## 7. Components to build
+
+- `AuthContext` â€” wraps Firebase auth state + live `users/{uid}` profile doc (including `isAdmin`)
+- `ProtectedRoute`, `AdminRoute` â€” route guards
+- `ShopOrderCard` â€” one shop's items with qty steppers
+- `QtyStepper` â€” reusable +/- control
+- `OrderSummaryBar` â€” sticky total bar
+- `AdminOrderList`, `AdminShoppingSummary`, `AdminMenuEditor`
+- `Navbar` with logout
+
+## 8. Firestore Security Rules â€” `firestore.rules`
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    match /usernames/{usernameLower} {
+      allow read: if true;
+      allow create: if isOwner(request.resource.data.uid);
+      allow update, delete: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) && request.resource.data.isAdmin == false;
+      allow update: if isOwner(uid) && request.resource.data.isAdmin == resource.data.isAdmin;
+      allow update: if isAdmin();
+    }
+
+    match /shops/{shopId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /items/{itemId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    match /orders/{date}/userOrders/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid);
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+  }
+}
+```
+
+## 9. Firebase config files
+
+`firestore.indexes.json`
+```json
+{
+  "indexes": [],
+  "fieldOverrides": []
+}
+```
+
+`firebase.json`
+```json
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
+```
+
+`.firebaserc`
+```json
+{
+  "projects": {
+    "default": "YOUR_FIREBASE_PROJECT_ID"
+  }
+}
+```
+
+## 10. Vercel config â€” `vercel.json`
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+## 11. Environment variables â€” `.env.example`
+
+```
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+```
+
+`src/firebase.js` reads these via `import.meta.env.VITE_FIREBASE_*` and initializes Auth + Firestore. Add `.env` (real values) to `.gitignore`.
+
+## 12. Project structure
+
+```
+/src
+  /components (Navbar, ShopOrderCard, QtyStepper, OrderSummaryBar, AdminOrderList, AdminShoppingSummary, AdminMenuEditor, ProtectedRoute, AdminRoute)
+  /context (AuthContext.jsx)
+  /pages (Login.jsx, Signup.jsx, Order.jsx, Admin.jsx)
+  /utils (today.js, price.js)
+  firebase.js
+  App.jsx
+  main.jsx
+/scripts
+  seed.js
+firestore.rules
+firestore.indexes.json
+firebase.json
+.firebaserc
+vercel.json
+.env.example
+tailwind.config.js
+postcss.config.js
+index.html
+package.json
+README.md
+```
+
+## 13. UI/UX requirements
+
+- Mobile-first, must work cleanly at ~360px width up to desktop (use Tailwind responsive grid: 1 column on mobile, 2â€“3 columns on larger screens for shop cards on the order page).
+- Currency shown as `Rs. 320.00` style formatting (LKR).
+- Large tap-friendly +/- buttons for quantity (min 44px touch target).
+- Clean, minimal, card-based design â€” no clutter. Use a simple color per shop optional accent, neutral background, rounded cards, subtle shadow.
+- Loading and empty states everywhere (no orders yet today, no items in a shop, etc.).
+- Simple, readable typography â€” this is used by non-technical hostel friends.
+
+## 14. Currency / price assumption
+
+All prices are in Sri Lankan Rupees (LKR), displayed as `Rs. X.00`. This isn't stated explicitly but is inferred from context (Sinhala place names, price ranges) â€” flag this assumption in the README so it can be corrected if wrong.
+
+## 15. Acceptance checklist (must all pass before considering this done)
+
+- [ ] Signup/login works with Name + Password only (no visible email field)
+- [ ] Duplicate usernames are rejected cleanly
+- [ ] Order page lists all 4 shops with correct seeded items/prices
+- [ ] Selecting quantities updates a live running total instantly
+- [ ] Saving an order writes correctly to `orders/{today}/userOrders/{uid}`
+- [ ] Reloading the order page prefills today's already-saved order
+- [ ] Non-admin users cannot open `/admin` (redirected)
+- [ ] Admin "Today's Orders" tab shows every member's order with their name and breakdown, live-updating
+- [ ] Admin "Shopping Summary" tab shows totals grouped by shop + item + quantity, with **zero user names**
+- [ ] Admin "Manage Menu" tab can edit prices, toggle items active/inactive, and add new items/shops (so Delgaha Kade can be filled in)
+- [ ] `npm run build` produces a working Vite build deployable to Vercel
+- [ ] `firebase deploy --only firestore:rules` deploys the rules successfully
+- [ ] README includes setup steps: create Firebase project, enable Email/Password auth, create Firestore DB, run seed script, set first admin manually, add env vars to Vercel
+
+Build all files now, fully working, no placeholders left unimplemented.
+

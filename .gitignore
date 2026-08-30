@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment secrets — copy .env.example and fill in real values
+.env
+
+# Firebase service account key (for seed script only, NEVER commit)
+serviceAccountKey.json
+
+# Editor
+.DS_Store
+*.log
