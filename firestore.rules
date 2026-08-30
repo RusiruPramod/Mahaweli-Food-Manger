@@ -38,9 +38,16 @@ service cloud.firestore {
       }
     }
 
-    match /orders/{date}/userOrders/{uid} {
+    // Sessions — readable by all signed-in users so Order.jsx can detect open sessions
+    match /sessions/{sessionId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Orders keyed by sessionId (e.g. 2026-08-30_lunch)
+    match /orders/{sessionId}/userOrders/{uid} {
       allow read: if isOwner(uid) || isAdmin();
-      allow create, update: if isOwner(uid);
+      allow create, update: if isOwner(uid) && isSignedIn();
       allow delete: if isOwner(uid) || isAdmin();
     }
 
