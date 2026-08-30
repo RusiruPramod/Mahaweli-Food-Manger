@@ -57,5 +57,9 @@ service cloud.firestore {
         allow read, write, delete: if isAdmin();
       }
     }
+
+    match /admin_notes/{noteId} {
+      allow read, write, delete: if isAdmin();
+    }
   }
 }

@@ -16,6 +16,7 @@ import { formatPrice } from "../utils/price";
 import Navbar from "../components/Navbar";
 import AdminOrderList from "../components/AdminOrderList";
 import AdminShoppingSummary from "../components/AdminShoppingSummary";
+import AdminFoodNotepad from "../components/AdminFoodNotepad";
 import AdminOrderHistory from "../components/AdminOrderHistory";
 import AdminMenuEditor from "../components/AdminMenuEditor";
 import AdminSessionManager from "../components/AdminSessionManager";
@@ -30,17 +31,19 @@ import {
   CheckCircle,
   RefreshCw,
   AlertTriangle,
+  Calculator,
 } from "../components/Icons";
 
 // Session icon mapping
 const SESSION_ICONS = { morning: "☀️", lunch: "🍽️", dinner: "🌙", extra: "⭐" };
 
 const TABS = [
-  { id: "sessions", label: "Sessions",        icon: Calendar },
-  { id: "orders",   label: "Today's Orders",  icon: ClipboardList },
-  { id: "summary",  label: "Shopping Summary", icon: Store },
-  { id: "history",  label: "Order History",   icon: History },
-  { id: "menu",     label: "Manage Menu",     icon: Settings },
+  { id: "sessions", label: "Sessions",         icon: Calendar },
+  { id: "orders",   label: "Today's Orders",   icon: ClipboardList },
+  { id: "summary",  label: "Shopping Summary",  icon: Store },
+  { id: "notepad",  label: "Food Notepad",     icon: Calculator },
+  { id: "history",  label: "Order History",    icon: History },
+  { id: "menu",     label: "Manage Menu",      icon: Settings },
 ];
 
 export default function Admin() {
@@ -443,6 +446,10 @@ export default function Admin() {
           </div>
           );
         })()}
+
+        {activeTab === "notepad" && (
+          <AdminFoodNotepad shops={shops} loading={shopsLoading} />
+        )}
 
         {activeTab === "history" && <AdminOrderHistory />}
 
