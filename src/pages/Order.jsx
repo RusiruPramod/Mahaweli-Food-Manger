@@ -220,10 +220,18 @@ export default function Order() {
             <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : shops.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            <p className="text-5xl mb-3">🏪</p>
-            <p className="font-medium">No shops available right now.</p>
-            <p className="text-sm mt-1">Check back soon!</p>
+          <div className="text-center py-20 bg-white border border-gray-200 rounded-3xl p-8 max-w-md mx-auto">
+            <p className="text-5xl mb-4">🏪</p>
+            <h2 className="font-bold text-gray-800 text-lg mb-2">No shops or menu items found</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              The database is empty. You need to initialize the shops and menus before ordering.
+            </p>
+            <a
+              href="/setup"
+              className="inline-block bg-brand-500 hover:bg-brand-600 text-white font-bold px-6 py-3 rounded-xl transition-all duration-150 shadow-md shadow-brand-100"
+            >
+              Initialize Database & Users
+            </a>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">

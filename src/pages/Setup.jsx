@@ -201,8 +201,11 @@ export default function Setup() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl px-4 py-3 font-medium">
-              {error}
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl px-4 py-3 font-medium space-y-1">
+              <p>{error}</p>
+              <div className="text-[10px] text-red-500 font-normal mt-1 border-t border-red-100 pt-1 leading-normal">
+                <strong>Troubleshooting Tip:</strong> If you get a "Missing or insufficient permissions" error, please make sure you deployed the updated <code className="bg-red-100 px-1 rounded">firestore.rules</code> file using the Firebase CLI, or set rules to public read/write in your Firebase Console temporarily while running this setup!
+              </div>
             </div>
           )}
 
