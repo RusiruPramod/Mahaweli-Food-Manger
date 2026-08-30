@@ -9,7 +9,7 @@ import { formatPrice } from "../utils/price";
  *  - orders: [{ uid, userName, items: [{shopId, shopName, itemId, itemName, price, qty}], total }]
  *  - loading: boolean
  */
-export default function AdminOrderList({ orders, loading }) {
+export default function AdminOrderList({ orders, allUsers, loading }) {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
@@ -18,19 +18,21 @@ export default function AdminOrderList({ orders, loading }) {
     );
   }
 
-  if (orders.length === 0) {
+  // Filter out admin accounts to get list of regular members
+  const members = (allUsers || []).filter((u) => !u.isAdmin);
+
+  if (members.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400">
-        <p className="text-4xl mb-3">📋</p>
-        <p className="font-medium">No orders placed today yet.</p>
-        <p className="text-sm mt-1">Check back once members start ordering.</p>
+        <p className="text-4xl mb-3">👥</p>
+        <p className="font-medium">No members registered yet.</p>
       </div>
     );
   }
 
-  // Sort alphabetically by name
-  const sorted = [...orders].sort((a, b) =>
-    a.userName.localeCompare(b.userName)
+  // Sort members alphabetically by name
+  const sortedMembers = [...members].sort((a, b) =>
+    a.name.localeCompare(b.name)
   );
 
   // Group a user's items by shop
@@ -45,22 +47,56 @@ export default function AdminOrderList({ orders, loading }) {
     return Object.values(map);
   }
 
+  // Count how many members have ordered
+  const orderedCount = sortedMembers.filter((m) =>
+    orders.some((o) => o.uid === m.uid)
+  ).length;
+
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500 font-medium">
-        {orders.length} member{orders.length !== 1 ? "s" : ""} ordered today
-      </p>
+      <div className="flex items-center justify-between text-sm text-gray-500 font-medium">
+        <span>
+          Ordered: <strong className="text-brand-600 font-bold">{orderedCount}</strong> / {sortedMembers.length} members
+        </span>
+      </div>
 
-      {sorted.map((order) => {
+      {sortedMembers.map((member) => {
+        const order = orders.find((o) => o.uid === member.uid);
+
+        if (!order) {
+          // Member has not ordered yet
+          return (
+            <div
+              key={member.uid}
+              className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center justify-between opacity-75"
+            >
+              <div>
+                <h3 className="font-bold text-gray-700">{member.name}</h3>
+                <p className="text-xs text-red-500 font-medium mt-0.5">
+                  ❌ No order placed today
+                </p>
+              </div>
+              <span className="text-xs font-semibold bg-gray-100 text-gray-400 px-2.5 py-1 rounded-full">
+                Pending
+              </span>
+            </div>
+          );
+        }
+
         const shopGroups = groupByShop(order.items);
         return (
           <div
-            key={order.uid}
-            className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
+            key={member.uid}
+            className="bg-white rounded-2xl border-2 border-brand-200 shadow-sm overflow-hidden"
           >
             {/* Header */}
-            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-bold text-gray-800">{order.userName}</h3>
+            <div className="px-4 py-3 bg-brand-50/50 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-gray-800">{member.name}</h3>
+                <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider mt-0.5">
+                  ✅ Ordered
+                </p>
+              </div>
               <span className="font-bold text-brand-600">
                 {formatPrice(order.total)}
               </span>
@@ -81,7 +117,7 @@ export default function AdminOrderList({ orders, loading }) {
                       >
                         <span className="text-gray-700">
                           {item.itemName}{" "}
-                          <span className="text-gray-400">× {item.qty}</span>
+                          <span className="text-gray-400 font-bold">× {item.qty}</span>
                         </span>
                         <span className="text-gray-600 font-medium tabular-nums">
                           {formatPrice(item.price * item.qty)}

@@ -38,6 +38,20 @@ export default function Admin() {
     return unsub;
   }, [today]);
 
+  // ---------- All Users (real-time) ----------
+  const [allUsers, setAllUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+
+  useEffect(() => {
+    const usersRef = collection(db, "users");
+    const unsub = onSnapshot(usersRef, (snap) => {
+      const data = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+      setAllUsers(data);
+      setUsersLoading(false);
+    });
+    return unsub;
+  }, []);
+
   // ---------- Shops + items (real-time, all — including inactive) ----------
   const [shops, setShops] = useState([]);
   const [shopsLoading, setShopsLoading] = useState(true);
@@ -120,7 +134,11 @@ export default function Admin() {
 
         {/* Tab content */}
         {activeTab === "orders" && (
-          <AdminOrderList orders={orders} loading={ordersLoading} />
+          <AdminOrderList
+            orders={orders}
+            allUsers={allUsers}
+            loading={ordersLoading || usersLoading}
+          />
         )}
         {activeTab === "summary" && (
           <AdminShoppingSummary orders={orders} loading={ordersLoading} />
