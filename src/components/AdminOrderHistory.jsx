@@ -10,6 +10,17 @@ import {
 import { db } from "../firebase";
 import { formatPrice } from "../utils/price";
 import { getToday } from "../utils/today";
+import {
+  History,
+  Search,
+  Calendar,
+  Store,
+  Users,
+  Trash2,
+  ClipboardList,
+  ChevronDown,
+  ChevronUp,
+} from "./Icons";
 
 export default function AdminOrderHistory() {
   const [historyList, setHistoryList] = useState([]);
@@ -188,13 +199,15 @@ export default function AdminOrderHistory() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <span>📜</span> Order History & Sessions
+              <History className="w-5 h-5 text-brand-600" />
+              <span>Order History & Sessions</span>
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
               Browse archived delivery cycles, view merged item counts, and inspect member breakdowns.
             </p>
           </div>
-          <span className="text-xs font-semibold px-3 py-1 bg-brand-50 text-brand-700 rounded-full self-start sm:self-auto border border-brand-100">
+          <span className="text-xs font-semibold px-3 py-1 bg-brand-50 text-brand-700 rounded-full self-start sm:self-auto border border-brand-100 flex items-center gap-1">
+            <History className="w-3.5 h-3.5" />
             {historyList.length} Sessions Archived
           </span>
         </div>
@@ -210,11 +223,13 @@ export default function AdminOrderHistory() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all pl-8"
             />
-            <span className="absolute left-2.5 top-2.5 text-xs text-gray-400">🔍</span>
+            <span className="absolute left-2.5 top-2.5">
+              <Search className="w-4 h-4 text-gray-400" />
+            </span>
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-2.5 top-2 text-xs text-gray-400 hover:text-gray-600"
+                className="absolute right-2.5 top-2.5 text-xs text-gray-400 hover:text-gray-600"
               >
                 ✕
               </button>
@@ -223,7 +238,10 @@ export default function AdminOrderHistory() {
 
           {/* Date Picker */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium whitespace-nowrap">📅 Date:</span>
+            <span className="text-xs text-gray-500 font-medium whitespace-nowrap flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-gray-400" />
+              Date:
+            </span>
             <input
               type="date"
               value={selectedDate}

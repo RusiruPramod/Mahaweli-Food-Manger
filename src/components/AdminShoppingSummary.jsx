@@ -1,4 +1,5 @@
 import { getToday } from "../utils/today";
+import { ClipboardList, Store } from "./Icons";
 
 /**
  * Admin tab: Shopping Summary
@@ -62,7 +63,7 @@ export default function AdminShoppingSummary({ orders = [], shops = [], loading 
   if (orders.length === 0 && shopList.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400 bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
-        <p className="text-5xl mb-3">🛒</p>
+        <Store className="w-12 h-12 text-gray-300 mx-auto mb-3" />
         <h3 className="font-bold text-gray-800 text-base">Shopping List is Empty</h3>
         <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
           When members place their orders, aggregated item counts per shop will automatically appear here.
@@ -78,12 +79,14 @@ export default function AdminShoppingSummary({ orders = [], shops = [], loading 
         {/* Card Header */}
         <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">📋</span>
+            <div className="w-8 h-8 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center border border-brand-100">
+              <ClipboardList className="w-4 h-4" />
+            </div>
             <div>
-              <h2 className="font-extrabold text-gray-900 text-base">
+              <h2 className="font-extrabold text-gray-900 text-sm sm:text-base tracking-tight">
                 TODAY'S SHOPPING SUMMARY
               </h2>
-              <p className="text-xs text-gray-500 font-semibold mt-0.5">
+              <p className="text-[10px] text-gray-500 font-bold uppercase mt-0.5">
                 Date: {today}
               </p>
             </div>
@@ -102,10 +105,10 @@ export default function AdminShoppingSummary({ orders = [], shops = [], loading 
             const hasOrders = items.length > 0;
 
             return (
-              <div key={shop.shopId} className="space-y-2">
+              <div key={shop.shopId} className="space-y-2.5">
                 {/* Shop Name */}
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🏪</span>
+                  <Store className="w-4 h-4 text-gray-500" />
                   <h3 className="font-extrabold text-gray-800 text-sm sm:text-base">
                     {shop.shopName}
                   </h3>

@@ -19,12 +19,22 @@ import AdminOrderList from "../components/AdminOrderList";
 import AdminShoppingSummary from "../components/AdminShoppingSummary";
 import AdminOrderHistory from "../components/AdminOrderHistory";
 import AdminMenuEditor from "../components/AdminMenuEditor";
+import {
+  ClipboardList,
+  Store,
+  History,
+  Settings,
+  RefreshCw,
+  Calendar,
+  CheckCircle,
+  AlertTriangle,
+} from "../components/Icons";
 
 const TABS = [
-  { id: "orders", label: "Today's Orders", emoji: "📋" },
-  { id: "summary", label: "Shopping Summary", emoji: "🛒" },
-  { id: "history", label: "Order History", emoji: "📜" },
-  { id: "menu", label: "Manage Menu", emoji: "⚙️" },
+  { id: "orders", label: "Today's Orders", icon: ClipboardList },
+  { id: "summary", label: "Shopping Summary", icon: Store },
+  { id: "history", label: "Order History", icon: History },
+  { id: "menu", label: "Manage Menu", icon: Settings },
 ];
 
 export default function Admin() {
@@ -196,7 +206,10 @@ export default function Admin() {
               </span>
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-500 mt-1 font-medium">
-              <span>📅 {today}</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                {today}
+              </span>
               <span>•</span>
               <span>
                 Active Orders:{" "}
@@ -217,9 +230,9 @@ export default function Admin() {
             <button
               id="reset-session-btn"
               onClick={openResetModal}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20 transition-all flex items-center justify-center gap-1.5 active:scale-95 border border-amber-400"
             >
-              <span>🔄</span>
+              <RefreshCw className="w-4 h-4 animate-spin-hover" />
               <span>Reset / New Session</span>
             </button>
           </div>
@@ -228,37 +241,40 @@ export default function Admin() {
         {/* Feedback Alert */}
         {resetFeedback && (
           <div className="mb-5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-2xl px-4 py-3 flex items-center gap-2 shadow-xs">
-            <span className="text-lg">✅</span>
+            <CheckCircle className="w-4 h-4 text-emerald-600" />
             <span>{resetFeedback}</span>
           </div>
         )}
 
         {/* Tabs */}
         <div className="flex gap-1.5 bg-gray-200/80 p-1.5 rounded-2xl mb-6 overflow-x-auto shadow-inner">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              id={`tab-${tab.id}`}
-              onClick={() => setActiveTab(tab.id)}
-              className={`
-                flex-1 min-w-max flex items-center justify-center gap-2
-                px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200
-                ${
-                  activeTab === tab.id
-                    ? "bg-white text-gray-900 shadow-sm shadow-black/5"
-                    : "text-gray-500 hover:text-gray-800"
-                }
-              `}
-            >
-              <span className="text-base">{tab.emoji}</span>
-              <span>{tab.label}</span>
-              {tab.id === "orders" && orders.length > 0 && (
-                <span className="bg-brand-500 text-white text-[10px] px-2 py-0.2 rounded-full font-bold">
-                  {orders.length}
-                </span>
-              )}
-            </button>
-          ))}
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                id={`tab-${tab.id}`}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex-1 min-w-max flex items-center justify-center gap-2
+                  px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200
+                  ${
+                    activeTab === tab.id
+                      ? "bg-white text-gray-900 shadow-sm shadow-black/5"
+                      : "text-gray-500 hover:text-gray-800"
+                  }
+                `}
+              >
+                <Icon className={`w-4 h-4 ${activeTab === tab.id ? "text-brand-600" : "text-gray-400"}`} />
+                <span>{tab.label}</span>
+                {tab.id === "orders" && orders.length > 0 && (
+                  <span className="bg-brand-500 text-white text-[10px] px-2 py-0.2 rounded-full font-bold">
+                    {orders.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab content */}
@@ -287,8 +303,8 @@ export default function Admin() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl font-bold">
-                🔄
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                <RefreshCw className="w-6 h-6" />
               </div>
               <div>
                 <h3 className="font-extrabold text-gray-900 text-lg">
@@ -301,10 +317,11 @@ export default function Admin() {
             </div>
 
             <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 space-y-2">
-              <p className="font-semibold">
-                ⚠️ What happens when you reset:
+              <p className="font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <span>⚠️ What happens when you reset:</span>
               </p>
-              <ul className="list-disc pl-4 space-y-1 text-amber-800">
+              <ul className="list-disc pl-5 space-y-1 text-amber-800">
                 <li>
                   Current <strong className="text-black">{orders.length} orders</strong> ({formatPrice(activeGrandTotal)}) will be <strong>archived into Order History</strong>.
                 </li>
